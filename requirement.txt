@@ -1,0 +1,18 @@
+I want a software that I can queue up a list of keywords to search on google.  It will go on google, search for Roofing Contractor Los Angeles and many other keywords.  It will go to the organic search result #1 position, click on each website, then hit back.  Then it will click on the organic search result #2 position, back, then organic search result #3 position.  It will do it all the way to the #10 position, back, then go to the next keyword.  I can have hundreds to thousands of keywords.
+
+This software need to be set it and forget it.
+
+do you know how to do with headless?  chrome driver?
+i'm thinking about it, i feel that might work better
+seem like a real browser visiting.
+Have a text file of all keywords, I can add/remove keywords while it is running [1 keyword per line] [In this text file, I should be able to do “Roofing Contractor Los Angeles, 1500”, the 1500 = max search for that keyword, if you have better idea on how to do this, let me know.]  
+Have a text file where I can add/ignore websites to ignore. E.g. hireageek.com, I can add/remove sites while it is running (It will never click on website that is listed here. [1 domain per line]
+I can set the amount of time to spend on site before clicking back.  It should be in sec or millisec.  I might have to go ½ a sec as my standard.
+Auto save campaign, if I close out of it, all settings will be saved.  Open again, I can continue where I left off.
+If Google captcha is found, have it reload search and try again
+Max search = max search for the month, we need a way to count how many was done, maybe like this Roofing Contractor Los Angeles, 1500, 556.  556 = how many was done, 1500 =  how many total.
+Need GUI to specify Keywords, Domain to Ignore, Time on Site, Start/Stop Button, Pause Button
+Software need to be portable, it’ll look for the text files in local folder, so I can move project to different PCs if needed.
+Support proxy x.x.x.x:XXXXXX   ip/port
+I plan on letting this run 24/7
+
