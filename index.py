@@ -13,32 +13,60 @@ from selenium.webdriver.support.ui import WebDriverWait
 options = Options()
 options.add_argument("--start-maximized")
 
-driver = None
 index = 0
 stop_flag = False
 th = None
 
+with open('./proxy.txt', 'r') as f:
+    proxys = [line.strip() for line in f]
+
+c_proxy = proxys[0]
+
+def change_proxy():
+    global c_proxy
+    with open('./proxy.txt', 'r') as f:
+        proxys = [line.strip() for line in f]
+    temp_proxy = proxys[0]
+    for i in range(0, len(proxys) - 2):
+        proxys[i] = proxys[i + 1]
+    proxys[len(proxys) - 1] = temp_proxy
+    f.close()
+    with open('./proxy.txt', 'w') as f:
+        for proxy in proxys:
+            f.write(proxy + '\n')
+    f.close()
+    c_proxy = proxys[0]
+    
 def visit_all_links():
-    global driver
     global index
     global stop_flag
-
+    global th
+    global c_proxy
+    driver = None
     while not stop_flag:
-        with open('./keywords.txt', 'r') as f:
-            keywords = [line.strip() for line in f]
-
-        with open('./ignore_websites.txt', 'r') as f:
-            ignore_websites = [line.strip() for line in f]
-
+        with open('./ignore_websites.txt', 'r') as file_ignore:
+            ignore_websites = [line.strip() for line in file_ignore]
+        with open('./keywords.txt', 'r') as file_keyword:
+            texts = [line.strip() for line in file_keyword]
+            temp_texts = texts
+        for length in range(0, len(texts) - 1):
+            temp_texts[length] = texts[length] + '\n'
         i = 0
-        for keyword in keywords:
+        for text in texts:
             if i < index:
                 i += 1
                 continue
 
             if stop_flag:
+                driver.quit()
                 break
-
+            result = text.split(',')
+            keyword = result[0]
+            keyword_search_count = int(result[1])
+            keyword_max_count = int(result[2])
+            keyword_current_count = int(result[3])
+            
+            # options.add_argument(f'--proxy-server={c_proxy}')
             driver = webdriver.Chrome(options=options)
             driver.get("https://www.google.com/search?q=" + keyword)
             time.sleep(5)
@@ -46,40 +74,50 @@ def visit_all_links():
             links = driver.find_elements(by=By.XPATH, value='//a[@jsname = "UWckNb"]')
 
             valid_links = []
+            link_count = 0
             for link in links:
                 url = link.get_attribute('href')
                 if not any(website in url for website in ignore_websites):
+                    if link_count == keyword_search_count:
+                        break
                     valid_links.append(url)
+                    link_count += 1 
 
             for link_url in valid_links:
+                link_url = 'https://www.babla.ru/%D0%B0%D0%BD%D0%B3%D0%BB%D0%B8%D0%B9%D1%81%D0%BA%D0%B8%D0%B9-%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9/puppy'
                 try:
                     driver.execute_script(f"window.open('" + link_url + "', '__blank__');")
-                    time.sleep(2)
+                    time.sleep(0.5)
                     try:
-                        captcha_element = driver.find_element(by=By.ID, value="real_captcha_id")
-                    except:
+                        captcha_element = driver.find_element(by=By.ID, value="challenge-stage")
+                    except NoSuchElementException:
                         captcha_element = None
-
-                    if captcha_element != None:
+                    # print(captcha_element)
+                    if captcha_element:
                         print('here')
-                        WebDriverWait(driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.XPATH,"//iframe[starts-with(@name, 'a-') and starts-with(@src, 'https://www.google.com/recaptcha')]")))
-
-                        # Clicking on element
-                        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, "div.recaptcha-checkbox-checkmark"))).click()
-                        time.sleep(10)
+                        driver.quit()
+                        return
+                    #     # visit_all_links()
                     time.sleep(2)
                 except:
                     print("Website load failed")
-                
+            temp_texts[index] = keyword + ',10,1500,' + str(keyword_current_count + 1) + '\n'
+            with open('./keywords.txt', 'w') as file_keyword:
+                file_keyword.writelines(temp_texts)
             index += 1
+            i += 1
+            time.sleep(2)
             driver.quit()
+        break
 
 def start_crawling():
     global stop_flag
     global index
+    global th
     stop_flag = False
     index = 0
-    threading.Thread(target=visit_all_links).start()
+    th = threading.Thread(target=visit_all_links)
+    th.start()
 
 def pause_crawling():
     global stop_flag
@@ -88,7 +126,9 @@ def pause_crawling():
 def resume_crawling():
     global stop_flag
     stop_flag = False
-    threading.Thread(target=visit_all_links).start()
+    global th
+    th = threading.Thread(target=visit_all_links)
+    th.start()
 
 def add_keyword():
     text = input_keyword.get()
